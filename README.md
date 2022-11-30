@@ -1,4 +1,4 @@
-# GitHub Action for BuildPulse [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/Workshop64/buildpulse-action/main/LICENSE)
+# GitHub Action for BuildPulse [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/buildpulse/buildpulse-action/main/LICENSE)
 
 Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] to help you identify and eliminate flaky tests.
 
@@ -19,7 +19,7 @@ Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] t
 
     - name: Upload test results to BuildPulse for flaky test detection
       if: '!cancelled()' # Run this step even when the tests fail. Skip if the workflow is cancelled.
-      uses: Workshop64/buildpulse-action@main
+      uses: buildpulse/buildpulse-action@main
       with:
         account: <buildpulse-account-id>
         repository: <buildpulse-repository-id>
