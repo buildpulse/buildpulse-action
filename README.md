@@ -12,7 +12,7 @@ Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] t
     ```yaml
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Run tests
       run: echo "Run your tests and generate XML reports for your test results"
