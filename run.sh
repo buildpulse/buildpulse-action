@@ -23,7 +23,7 @@ for path in $INPUT_PATH; do
 	then
 		echo "🐛 The given path does not exist: $path"
 		echo "🧰 To resolve this issue, set the 'path' parameter to the location of your XML test report(s)."
-		exit 1
+		exit 0
 	fi
 done
 REPORT_PATH="${INPUT_PATH}"
@@ -32,7 +32,7 @@ if [ ! -d "$INPUT_REPOSITORY_PATH" ]
 then
 	echo "🐛 The given path is not a directory: ${INPUT_REPOSITORY_PATH}"
 	echo "🧰 To resolve this issue, set the 'repository-path' parameter to the directory that contains the local git clone of your repository."
-	exit 1
+	exit 0
 fi
 REPOSITORY_PATH="${INPUT_REPOSITORY_PATH}"
 
