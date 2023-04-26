@@ -18,13 +18,16 @@ then
 fi
 REPOSITORY_ID=$INPUT_REPOSITORY
 
-for path in $INPUT_PATH; do
-	if [ ! -e "$path" ]
-	then
-		echo "🐛 The given path does not exist: $path"
-		echo "🧰 To resolve this issue, set the 'path' parameter to the location of your XML test report(s)."
-		exit 1
-	fi
+paths=("$INPUT_PATH")
+
+for path in "${paths[@]}"; do
+	for file in $path; do
+		if [ ! -e "$file" ]; then
+			echo "🐛 The given path does not exist: $path"
+			echo "🧰 To resolve this issue, set the 'path' parameter to the location of your XML test report(s)."
+			exit 1
+		fi
+	done
 done
 REPORT_PATH="${INPUT_PATH}"
 
