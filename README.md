@@ -23,7 +23,9 @@ Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] t
       with:
         account: <buildpulse-account-id>
         repository: <buildpulse-repository-id>
-        path: <path-to-xml-reports>
+        path: |
+          reports/junit.xml # <path-to-xml-reports>
+          reports2/**/junit.xml # support double globbing (if your github-hosted runner OS uses bash 4+)
         key: ${{ secrets.BUILDPULSE_ACCESS_KEY_ID }}
         secret: ${{ secrets.BUILDPULSE_SECRET_ACCESS_KEY }}
     ```
