@@ -2,8 +2,13 @@
 
 set -e
 
-# Set GLOBIGNORE to enable double globbing
-export GLOBIGNORE="*"
+# Enable double globbing if supported by the shell on the base github runner
+if shopt -q globstar 2>/dev/null; then
+	echo "This bash shell version supports double globbing: '${BASH_VERSION}'."
+  shopt -s globstar
+else
+  echo "This bash shell version does not support double globbing: '${BASH_VERSION}'. Please upgrade to bash 4+."
+fi
 
 if ! echo $INPUT_ACCOUNT | egrep -q '^[0-9]+$'
 then
