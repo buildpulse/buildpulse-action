@@ -2,12 +2,10 @@
 
 set -e
 
-echo "test"
-
 # Enable double globbing if supported by the shell on the base github runner
-if shopt -q globstar 2>/dev/null; then
+if shopt -s globstar; then
 	echo "This bash shell version supports double globbing: '${BASH_VERSION}'."
-  shopt -s globstar
+
 else
   echo "This bash shell version does not support double globbing: '${BASH_VERSION}'. Please upgrade to bash 4+."
 fi
