@@ -2,6 +2,9 @@
 
 set -e
 
+# Set GLOBIGNORE to enable double globbing
+export GLOBIGNORE="*"
+
 if ! echo $INPUT_ACCOUNT | egrep -q '^[0-9]+$'
 then
 	echo "🐛 The given value is not a valid account ID: ${INPUT_ACCOUNT}"
