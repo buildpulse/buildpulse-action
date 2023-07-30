@@ -71,7 +71,7 @@ case "$RUNNER_OS" in
 esac
 
 BUILDPULSE_TEST_REPORTER_HOSTS=(
-	https://github.com/buildpulse/test-reporter/releases/download/v0.26.1
+	https://github.com/buildpulse/test-reporter/releases/download/v0.26.2
 )
 [ -n "${INPUT_CLI_HOST}" ] && BUILDPULSE_TEST_REPORTER_HOSTS=("${INPUT_CLI_HOST}" "${BUILDPULSE_TEST_REPORTER_HOSTS[@]}")
 
