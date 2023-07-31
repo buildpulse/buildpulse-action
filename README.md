@@ -62,5 +62,13 @@ If your workflow checks out a _different_ commit than the commit that triggered 
 
 _Optional_ The path to the local git clone of the repository (default: ".").
 
+### `coverage-files`
+
+_Optional_ The paths to the coverage file(s) for the test results (space-separated).
+
+### `tags`
+
+_Optional_ Tags to apply to this build (space-separated).
+
 
 [buildpulse.io]: https://buildpulse.io
