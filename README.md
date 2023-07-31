@@ -28,6 +28,8 @@ Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] t
           reports2/**/junit.xml # support double globbing (if your github-hosted runner OS uses bash 4+)
         key: ${{ secrets.BUILDPULSE_ACCESS_KEY_ID }}
         secret: ${{ secrets.BUILDPULSE_SECRET_ACCESS_KEY }}
+        coverage-files: coverage/report.xml # IF PURCHASED
+        tags: e2e team1 staging # OPTIONAL
     ```
 
 ## Inputs
