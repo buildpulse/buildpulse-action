@@ -118,4 +118,4 @@ set -x
 BUILDPULSE_ACCESS_KEY_ID="${INPUT_KEY}" \
 	BUILDPULSE_SECRET_ACCESS_KEY="${INPUT_SECRET}" \
 	GITHUB_SHA="${COMMIT_SHA}" \
-	./buildpulse-test-reporter submit $REPORT_PATH --account-id $ACCOUNT_ID --repository-id $REPOSITORY_ID --repository-dir "${REPOSITORY_PATH}" --coverage-files "${INPUT_COVERAGE_FILES}" --tags "${INPUT_TAGS}" --disable-coverage-auto
+	./buildpulse-test-reporter submit $REPORT_PATH --account-id $ACCOUNT_ID --repository-id $REPOSITORY_ID --repository-dir "${REPOSITORY_PATH}" --coverage-files "${INPUT_COVERAGE_FILES}" --tags "${INPUT_TAGS}" --quota-id "${INPUT_QUOTA_ID}" --disable-coverage-auto

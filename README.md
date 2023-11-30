@@ -72,5 +72,9 @@ _Optional_ The paths to the coverage file(s) for the test results (space-separat
 
 _Optional_ Tags to apply to this build (space-separated).
 
+### `quota`
+
+_Optional_ Quota ID to count this upload against. Please set on BuildPulse Dashboard first.
+
 
 [buildpulse.io]: https://buildpulse.io

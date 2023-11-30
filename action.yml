@@ -76,6 +76,11 @@ inputs:
       Tags to apply to this build (space-separated).
     default: ""
     required: false
+  quota:
+    description: |
+      Quota ID to count this upload against. Please set on BuildPulse Dashboard first.
+    default: ""
+    required: false
 runs:
   using: composite
   steps:
@@ -93,3 +98,4 @@ runs:
         INPUT_COMMIT: ${{ inputs.commit }}
         INPUT_COVERAGE_FILES: ${{ inputs.coverage-files }}
         INPUT_TAGS: ${{ inputs.tags }}
+        INPUT_QUOTA_ID: ${{ inputs.quota }}
