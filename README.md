@@ -24,9 +24,9 @@ Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] t
       with:
         api-token: ${{ secrets.BUILDPULSE_API_TOKEN }}
         path: reports/junit.xml
-        coverage-files: coverage/report.xml # OPTIONAL
-        tags: e2e team1 staging # OPTIONAL
     ```
+
+That's it! The repository is automatically detected from the GitHub Actions environment.
 
 ### Legacy: Access Key/Secret Authentication
 
@@ -65,9 +65,11 @@ Required when using legacy `key`/`secret` authentication. Not needed when using 
 
 ### `repository`
 
-The unique numeric identifier for the repository being built.
+_Optional_ The unique numeric identifier for the repository being built.
 
-Required when using legacy `key`/`secret` authentication. Not needed when using `api-token`.
+When using `api-token`, this is automatically detected from `GITHUB_REPOSITORY_ID`. Only needed if you want to override the default.
+
+Required when using legacy `key`/`secret` authentication.
 
 ### `key`
 
