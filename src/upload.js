@@ -8,7 +8,7 @@ const https = require('https')
 const http = require('http')
 const { URL } = require('url')
 
-const DEFAULT_API_HOST = 'https://ecostack.tech'
+const DEFAULT_API_HOST = 'https://buildpulse.io'
 
 /**
  * Make an HTTP/HTTPS request
