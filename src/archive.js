@@ -25,7 +25,7 @@ function createMetadataYaml(metadata, options = {}) {
     git: {
       commit: metadata.commit,
       branch: metadata.branch,
-      tree_sha: metadata.treeSha,
+      tree: metadata.treeSha,
       repository: {
         owner: metadata.owner,
         name: metadata.repo
