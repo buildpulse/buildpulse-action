@@ -2,20 +2,34 @@ name: BuildPulse
 description: |
   Send test results to buildpulse.io to help you identify and eliminate flaky
   tests
-author: Jason Rudolph
+author: BuildPulse
 branding:
   icon: "activity"
   color: "gray-dark"
 inputs:
+  api-token:
+    description: |
+      BuildPulse API token for authentication (recommended).
+
+      Create an API token in your BuildPulse organization settings.
+      In GitHub, create an encrypted secret and use it as the value for this
+      input in your workflow.
+    required: false
   account:
     description: |
       BuildPulse's unique numeric identifier for the account that owns the
       repository.
-    required: true
+
+      Note: This is only required when using legacy key/secret authentication.
+      If using api-token, this input is not needed.
+    required: false
   repository:
     description: |
       BuildPulse's unique numeric identifier for the repository.
-    required: true
+
+      Note: This is only required when using legacy key/secret authentication.
+      If using api-token, this input is not needed.
+    required: false
   path:
     description: |
       Path to the XML file(s) for the test results.
@@ -27,6 +41,8 @@ inputs:
     description: |
       BuildPulse access key ID for the account that owns the repository.
 
+      Note: Legacy authentication method. We recommend using api-token instead.
+
       In the GitHub settings for your repository, create an encrypted secret
       named BUILDPULSE_ACCESS_KEY_ID and set its value to the BuildPulse access
       key ID for your account. For help creating encrypted secrets, please see
@@ -35,10 +51,12 @@ inputs:
       Then, use the encrypted secret as the value for the 'key' input in your
       workflow. For help using a secret in a workflow, please see the GitHub
       docs at https://bit.ly/3LICKlE.
-    required: true
+    required: false
   secret:
     description: |
       BuildPulse secret access key for the account that owns the repository.
+
+      Note: Legacy authentication method. We recommend using api-token instead.
 
       In the GitHub settings for your repository, create an encrypted secret
       named BUILDPULSE_SECRET_ACCESS_KEY and set its value to the BuildPulse
@@ -48,7 +66,7 @@ inputs:
       Then, use the encrypted secret as the value for the 'secret' input in your
       workflow. For help using a secret in a workflow, please see the GitHub
       docs at https://bit.ly/3LICKlE.
-    required: true
+    required: false
   repository-path:
     description: |
       Path to the local git clone of the repository (default: ".").
@@ -81,21 +99,18 @@ inputs:
       Quota ID to count this upload against. Please set on BuildPulse Dashboard first.
     default: ""
     required: false
+  api-host:
+    description: |
+      BuildPulse API host (for internal testing only).
+    default: ""
+    required: false
+outputs:
+  upload-id:
+    description: "The unique identifier for this upload"
+  account-id:
+    description: "The BuildPulse account ID"
+  repository-id:
+    description: "The BuildPulse repository ID"
 runs:
-  using: composite
-  steps:
-    - run: $GITHUB_ACTION_PATH/run.sh
-      shell: bash
-      continue-on-error: true
-      env:
-        INPUT_ACCOUNT: ${{ inputs.account }}
-        INPUT_REPOSITORY: ${{ inputs.repository }}
-        INPUT_PATH: ${{ inputs.path }}
-        INPUT_KEY: ${{ inputs.key }}
-        INPUT_SECRET: ${{ inputs.secret }}
-        INPUT_CLI_HOST: ${{ inputs.cli-host }} # Translate kebab-case input to snake_case env var
-        INPUT_REPOSITORY_PATH: ${{ inputs.repository-path }} # Translate kebab-case input to snake_case env var
-        INPUT_COMMIT: ${{ inputs.commit }}
-        INPUT_COVERAGE_FILES: ${{ inputs.coverage-files }}
-        INPUT_TAGS: ${{ inputs.tags }}
-        INPUT_QUOTA_ID: ${{ inputs.quota }}
+  using: node20
+  main: dist/index.js
