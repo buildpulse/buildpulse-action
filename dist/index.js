@@ -77175,11 +77175,11 @@ async function run() {
 
     // Determine repository ID
     // For legacy auth, repositoryId comes from inputs
-    // For new auth, it must be provided or we use the GitHub repo name
-    const repositoryId = inputs.repository || process.env.GITHUB_REPOSITORY?.split('/')[1]
+    // For new auth, use GITHUB_REPOSITORY_ID (available natively in GitHub Actions)
+    const repositoryId = inputs.repository || process.env.GITHUB_REPOSITORY_ID
 
     if (!repositoryId) {
-      throw new Error('Repository ID is required. Provide it via the repository input or api-token.')
+      throw new Error('Repository ID is required. Provide it via the repository input or set GITHUB_REPOSITORY_ID.')
     }
 
     // Upload to BuildPulse
