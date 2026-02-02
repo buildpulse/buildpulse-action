@@ -24,6 +24,7 @@ function createMetadataYaml(metadata, options = {}) {
     timestamp: metadata.timestamp,
     git: {
       commit: metadata.commit,
+      message: metadata.commitMessage,
       branch: metadata.branch,
       tree: metadata.treeSha,
       repository: {

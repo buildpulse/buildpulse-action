@@ -44,6 +44,17 @@ function getBranchFromGit(cwd) {
 }
 
 /**
+ * Get the commit message for a commit
+ * @param {string} commitSha - Commit SHA
+ * @param {string} cwd - Working directory
+ * @returns {string|null} Commit message (first line only)
+ */
+function getCommitMessage(commitSha, cwd) {
+  // Get first line of commit message (subject)
+  return gitCommand(`git log -1 --format=%s ${commitSha}`, cwd)
+}
+
+/**
  * Collect git metadata from environment and git commands
  * @param {Object} options - Options
  * @param {string} options.repositoryPath - Path to git repository
@@ -73,6 +84,9 @@ function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
   // Tree SHA
   const treeSha = getTreeSha(commitSha, repositoryPath)
 
+  // Commit message
+  const commitMessage = getCommitMessage(commitSha, repositoryPath)
+
   // Repository info
   const [owner, repo] = (env.GITHUB_REPOSITORY || '').split('/')
 
@@ -94,6 +108,7 @@ function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
 
   return {
     commit: commitSha,
+    commitMessage,
     branch,
     treeSha,
     owner,
@@ -113,5 +128,6 @@ function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
 module.exports = {
   collectMetadata,
   getTreeSha,
-  getBranchFromGit
+  getBranchFromGit,
+  getCommitMessage
 }
