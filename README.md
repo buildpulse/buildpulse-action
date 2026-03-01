@@ -1,36 +1,45 @@
-# GitHub Action for BuildPulse [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/buildpulse/buildpulse-action/main/LICENSE)
+# BuildPulse GitHub Action
 
-Easily connect your GitHub Actions CI workflows to [BuildPulse][buildpulse.io] to help you find and [fix flaky tests](https://buildpulse.io/products/flaky-tests).
+GitHub Action that uploads test results from customer CI pipelines to BuildPulse for flaky test detection.
+
+## Role in the System
+
+This action runs in **customer CI pipelines**. After tests run, it:
+1. Collects JUnit XML test result files
+2. Packages them into an archive with metadata (commit SHA, branch, timestamps)
+3. Uploads the archive to BuildPulse's S3 bucket via a signed URL from the web-client API
+4. The `process-test-results` Lambda then picks up the archive from S3
+
+**Upload flow:** `buildpulse-action → POST /api/test-results/upload-url (web-client) → S3 → process-test-results Lambda`
+
+## Related Repositories
+
+| Repo | Role |
+|------|------|
+| `web-client` | Provides signed S3 upload URLs (`POST /api/test-results/upload-url`), manages API tokens |
+| `test-reporter-lambdas` | `process-test-results` Lambda processes uploads from S3 |
+| `environment` | S3 bucket infrastructure for test result archives |
 
 ## Usage
 
 ### Recommended: API Token Authentication
 
-1. Create an API token in your BuildPulse organization settings
-2. In the GitHub settings for your repository, [create an encrypted secret](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets) named `BUILDPULSE_API_TOKEN` and set its value to your API token
-3. Add a step to your GitHub Actions workflow:
+```yaml
+steps:
+- name: Run tests
+  run: echo "Run your tests and generate XML reports"
 
-    ```yaml
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v4
+- name: Upload test results to BuildPulse
+  if: '!cancelled()'
+  uses: buildpulse/buildpulse-action@v2
+  with:
+    api-token: ${{ secrets.BUILDPULSE_API_TOKEN }}
+    path: reports/junit.xml
+```
 
-    - name: Run tests
-      run: echo "Run your tests and generate XML reports for your test results"
-
-    - name: Upload test results to BuildPulse for flaky test detection
-      if: '!cancelled()' # Run this step even when the tests fail. Skip if the workflow is cancelled.
-      uses: buildpulse/buildpulse-action@v2
-      with:
-        api-token: ${{ secrets.BUILDPULSE_API_TOKEN }}
-        path: reports/junit.xml
-    ```
-
-That's it! The repository is automatically detected from the GitHub Actions environment.
+Create an API token in your BuildPulse organization settings. The repository is automatically detected from the GitHub Actions environment.
 
 ### Legacy: Access Key/Secret Authentication
-
-If you have existing workflows using the legacy authentication method, they will continue to work:
 
 ```yaml
 steps:
@@ -47,76 +56,47 @@ steps:
 
 ## Inputs
 
-### `api-token`
-
-The BuildPulse API token for authentication. Create one in your organization settings.
-
-This is the recommended authentication method. When using `api-token`, you don't need to provide `account`, `repository`, `key`, or `secret`.
-
-### `path`
-
-**Required** The path to the XML file(s) for the test results. Can be a directory (e.g., `test/reports`), a single file (e.g., `reports/junit.xml`), or a glob (e.g., `app/*/results/*.xml`).
-
-### `account`
-
-The unique numeric identifier for the BuildPulse account that owns the repository.
-
-Required when using legacy `key`/`secret` authentication. Not needed when using `api-token`.
-
-### `repository`
-
-_Optional_ The unique numeric identifier for the repository being built.
-
-When using `api-token`, this is automatically detected from `GITHUB_REPOSITORY_ID`. Only needed if you want to override the default.
-
-Required when using legacy `key`/`secret` authentication.
-
-### `key`
-
-The `BUILDPULSE_ACCESS_KEY_ID` for the account that owns the repository.
-
-Legacy authentication method. We recommend using `api-token` instead.
-
-### `secret`
-
-The `BUILDPULSE_SECRET_ACCESS_KEY` for the account that owns the repository.
-
-Legacy authentication method. We recommend using `api-token` instead.
-
-### `commit`
-
-_Optional_ The SHA for the commit that produced the test results (default: the value of [`${{ github.sha }}`](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context), which is the commit that triggered the workflow).
-
-If your workflow checks out a _different_ commit than the commit that triggered the workflow, then use this input to specify the commit SHA that your workflow checked out. For example, if your workflow is triggered by the [`pull_request` event](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request), but you [customize the workflow to check out the pull request HEAD commit](https://github.com/actions/checkout/tree/v3.0.2#checkout-pull-request-head-commit-instead-of-merge-commit), then you'll want to set this input to the pull request HEAD commit SHA.
-
-### `repository-path`
-
-_Optional_ The path to the local git clone of the repository (default: ".").
-
-### `coverage-files`
-
-_Optional_ The paths to the coverage file(s) for the test results (space-separated).
-
-### `tags`
-
-_Optional_ Tags to apply to this build (space-separated).
-
-### `quota`
-
-_Optional_ Quota ID to count this upload against. Please set on BuildPulse Dashboard first.
+| Input | Required | Description |
+|-------|----------|-------------|
+| `api-token` | Recommended | BuildPulse API token from organization settings |
+| `path` | Yes | Path to JUnit XML file(s) — file, directory, or glob |
+| `account` | Legacy only | BuildPulse account ID |
+| `repository` | Legacy only | BuildPulse repository ID |
+| `key` | Legacy only | `BUILDPULSE_ACCESS_KEY_ID` |
+| `secret` | Legacy only | `BUILDPULSE_SECRET_ACCESS_KEY` |
+| `commit` | No | Commit SHA (default: `${{ github.sha }}`) |
+| `repository-path` | No | Path to git clone (default: `.`) |
+| `coverage-files` | No | Coverage file paths (space-separated) |
+| `tags` | No | Tags to apply to this build (space-separated) |
+| `quota` | No | Quota ID to count upload against |
 
 ## Outputs
 
-### `upload-id`
+| Output | Description |
+|--------|-------------|
+| `upload-id` | Unique identifier for this upload |
+| `account-id` | BuildPulse account ID |
+| `repository-id` | BuildPulse repository ID |
 
-The unique identifier for this upload.
+## Development
 
-### `account-id`
+```bash
+npm install
+npm test
+```
 
-The BuildPulse account ID.
+### Source Files
 
-### `repository-id`
+| File | Purpose |
+|------|---------|
+| `src/index.js` | Entry point — orchestrates the upload flow |
+| `src/archive.js` | Packages test result files into a tar archive |
+| `src/upload.js` | Handles S3 upload via signed URL |
+| `src/auth.js` | Authentication (API token and legacy key/secret) |
+| `src/metadata.js` | Collects Git metadata (commit, branch, timestamps) |
+| `action.yml` | GitHub Action definition (inputs, outputs, runs) |
 
-The BuildPulse repository ID.
+## Branch Status
 
-[buildpulse.io]: https://buildpulse.io
+- `main`: Stable v2 with API token auth
+- `v2-modernization`: GitHub App authentication migration (**pending merge** — do not merge until coordinated with web-client and environment changes)
