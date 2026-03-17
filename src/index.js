@@ -158,6 +158,18 @@ async function run() {
     const tags = parseSpaceSeparated(inputs.tags)
     const coverageFiles = parseSpaceSeparated(inputs.coverageFiles)
 
+    // Log coverage file status
+    if (coverageFiles.length > 0) {
+      for (const file of coverageFiles) {
+        if (fs.existsSync(file)) {
+          const size = fs.statSync(file).size
+          core.info(`Coverage file found: ${file} (${(size / 1024).toFixed(1)} KB)`)
+        } else {
+          core.warning(`Coverage file not found: ${file} (cwd: ${process.cwd()})`)
+        }
+      }
+    }
+
     // Create archive
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'buildpulse-'))
     const archivePath = path.join(tempDir, 'test-results.tar.gz')
