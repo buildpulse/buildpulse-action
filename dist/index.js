@@ -58130,7 +58130,7 @@ const https = __nccwpck_require__(5692)
 const http = __nccwpck_require__(8611)
 const { URL } = __nccwpck_require__(7016)
 
-const DEFAULT_API_HOST = 'https://buildpulse.io'
+const DEFAULT_API_HOST = 'https://app2.buildpulse.io'
 
 /**
  * Make an HTTP/HTTPS request
