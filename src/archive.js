@@ -61,6 +61,14 @@ function createMetadataYaml(metadata, options = {}) {
     content.quota_id = options.quotaId
   }
 
+  if (options.runner) {
+    content.runner = options.runner
+  }
+
+  if (options.execution) {
+    content.execution = options.execution
+  }
+
   return yaml.stringify(content)
 }
 

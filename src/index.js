@@ -9,10 +9,13 @@ const path = require('path')
 const fs = require('fs')
 const os = require('os')
 
+const { spawn } = require('child_process')
+
 const { authenticate, validateAuthInputs } = require('./auth')
 const { collectMetadata } = require('./metadata')
 const { createArchive } = require('./archive')
 const { upload } = require('./upload')
+const { createSampler, getRunnerInfo } = require('./sampler')
 
 /**
  * Parse space-separated input into array
@@ -37,6 +40,24 @@ async function getFiles(pattern) {
 }
 
 /**
+ * Run a command as a child process and return the exit code
+ * Streams stdout/stderr through so users see their test output
+ * @param {string} command - Shell command to execute
+ * @returns {Promise<number>} Exit code
+ */
+function runCommand(command) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, {
+      shell: true,
+      stdio: 'inherit'
+    })
+
+    child.on('error', reject)
+    child.on('close', (code) => resolve(code ?? 1))
+  })
+}
+
+/**
  * Main action entry point
  */
 async function run() {
@@ -54,7 +75,8 @@ async function run() {
       coverageFiles: core.getInput('coverage-files'),
       tags: core.getInput('tags'),
       quotaId: core.getInput('quota'),
-      apiHost: core.getInput('api-host') || process.env.BUILDPULSE_API_HOST
+      apiHost: core.getInput('api-host') || process.env.BUILDPULSE_API_HOST,
+      command: core.getInput('command')
     }
 
     // Special handling for Dependabot - skip if no credentials available
@@ -69,6 +91,38 @@ async function run() {
       throw new Error(
         'Authentication required: provide api-token OR (account + repository + key + secret)'
       )
+    }
+
+    // Collect runner info (always included)
+    const runner = getRunnerInfo()
+    core.info(`Runner: ${runner.cpus} CPUs, ${runner.total_memory_mb} MB RAM, ${runner.os}/${runner.arch}`)
+
+    // Run command in wrap mode if provided
+    let execution = null
+    if (inputs.command) {
+      core.info(`Running command: ${inputs.command}`)
+      const sampler = createSampler(1000)
+      const startTime = Date.now()
+
+      sampler.start()
+      const exitCode = await runCommand(inputs.command)
+      sampler.stop()
+
+      const durationMs = Date.now() - startTime
+      const metrics = sampler.getResults()
+
+      execution = {
+        command: inputs.command,
+        exit_code: exitCode,
+        duration_ms: durationMs,
+        metrics
+      }
+
+      core.info(`Command finished in ${(durationMs / 1000).toFixed(1)}s (exit code ${exitCode})`)
+      core.info(`Peak CPU: ${(metrics.cpu_load_peak * 100).toFixed(0)}%, Peak memory: ${metrics.memory_used_peak_mb} MB, Free min: ${metrics.memory_free_min_mb} MB`)
+
+      // Set exit code output so workflows can react
+      core.setOutput('command-exit-code', exitCode)
     }
 
     // Validate path input
@@ -116,7 +170,9 @@ async function run() {
       options: {
         tags,
         coverageFiles,
-        quotaId: inputs.quotaId
+        quotaId: inputs.quotaId,
+        runner,
+        execution
       }
     })
 
@@ -153,6 +209,11 @@ async function run() {
       fs.rmSync(tempDir, { recursive: true })
     } catch {
       // Ignore cleanup errors
+    }
+
+    // If wrap mode was used and the command failed, fail the action step
+    if (execution && execution.exit_code !== 0) {
+      core.setFailed(`Command exited with code ${execution.exit_code}`)
     }
   } catch (error) {
     core.setFailed(error.message)

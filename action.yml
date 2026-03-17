@@ -99,6 +99,19 @@ inputs:
       Quota ID to count this upload against. Please set on BuildPulse Dashboard first.
     default: ""
     required: false
+  command:
+    description: |
+      Test command to execute (optional). When provided the action runs in
+      "wrap mode": it starts collecting CPU and memory metrics, executes the
+      command, stops collecting, and then uploads test results along with
+      the captured resource metrics.
+
+      The command runs in a shell and its stdout/stderr are streamed through
+      so you see your normal test output.
+
+      Example: "npm test", "pytest --junitxml=results.xml", "go test ./..."
+    default: ""
+    required: false
   api-host:
     description: |
       BuildPulse API host (for internal testing only).
@@ -111,6 +124,8 @@ outputs:
     description: "The BuildPulse account ID"
   repository-id:
     description: "The BuildPulse repository ID"
+  command-exit-code:
+    description: "Exit code of the test command (only set when using command input)"
 runs:
   using: node20
   main: dist/index.js
