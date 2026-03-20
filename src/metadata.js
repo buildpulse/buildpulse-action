@@ -55,25 +55,71 @@ function getCommitMessage(commitSha, cwd) {
 }
 
 /**
- * Collect git metadata from environment and git commands
- * @param {Object} options - Options
- * @param {string} options.repositoryPath - Path to git repository
- * @param {string} [options.commitSha] - Override commit SHA
+ * Detect the CI provider from environment variables
+ * @returns {string} CI provider name
+ */
+function detectCIProvider() {
+  const env = process.env
+  if (env.GITHUB_ACTIONS) return 'github-actions'
+  if (env.BITBUCKET_BUILD_NUMBER) return 'bitbucket-pipelines'
+  if (env.CIRCLECI) return 'circleci'
+  if (env.TRAVIS) return 'travis-ci'
+  if (env.GITLAB_CI) return 'gitlab-ci'
+  if (env.JENKINS_URL) return 'jenkins'
+  return 'unknown'
+}
+
+/**
+ * Collect metadata from Bitbucket Pipelines environment
+ * @param {Object} env - Environment variables
+ * @param {string} repositoryPath - Path to git repository
  * @returns {Object} Git metadata
  */
-function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
-  const env = process.env
+function collectBitbucketMetadata(env, repositoryPath) {
+  const commitSha = env.BITBUCKET_COMMIT
+  const branch = env.BITBUCKET_BRANCH || getBranchFromGit(repositoryPath)
+  const treeSha = getTreeSha(commitSha, repositoryPath)
+  const commitMessage = getCommitMessage(commitSha, repositoryPath)
+  const [owner, repo] = (env.BITBUCKET_REPO_FULL_NAME || '').split('/')
 
-  // Commit SHA
+  return {
+    commit: commitSha,
+    commitMessage,
+    branch,
+    treeSha,
+    owner,
+    repo,
+    prNumber: env.BITBUCKET_PR_ID || null,
+    ciProvider: 'bitbucket-pipelines',
+    buildId: env.BITBUCKET_PIPELINE_UUID,
+    buildNumber: env.BITBUCKET_BUILD_NUMBER,
+    buildUrl: env.BITBUCKET_PIPELINE_UUID
+      ? `https://bitbucket.org/${env.BITBUCKET_REPO_FULL_NAME}/pipelines/results/${env.BITBUCKET_BUILD_NUMBER}`
+      : null,
+    triggeredBy: env.BITBUCKET_STEP_TRIGGERER_UUID || null,
+    workflow: null,
+    job: env.BITBUCKET_STEP_UUID || null,
+    repositoryId: env.BITBUCKET_REPO_UUID,
+    repoNameWithOwner: env.BITBUCKET_REPO_FULL_NAME,
+    timestamp: new Date().toISOString()
+  }
+}
+
+/**
+ * Collect metadata from GitHub Actions environment
+ * @param {Object} env - Environment variables
+ * @param {string} repositoryPath - Path to git repository
+ * @param {string} [overrideCommitSha] - Override commit SHA
+ * @returns {Object} Git metadata
+ */
+function collectGitHubMetadata(env, repositoryPath, overrideCommitSha) {
   const commitSha = overrideCommitSha || env.GITHUB_SHA
 
-  // Branch name - try multiple sources
-  let branch = env.GITHUB_HEAD_REF // For pull requests
+  let branch = env.GITHUB_HEAD_REF
   if (!branch) {
-    branch = env.GITHUB_REF_NAME // For push events
+    branch = env.GITHUB_REF_NAME
   }
   if (!branch && env.GITHUB_REF) {
-    // Extract from refs/heads/xxx
     const match = env.GITHUB_REF.match(/^refs\/heads\/(.+)$/)
     if (match) branch = match[1]
   }
@@ -81,30 +127,10 @@ function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
     branch = getBranchFromGit(repositoryPath)
   }
 
-  // Tree SHA
   const treeSha = getTreeSha(commitSha, repositoryPath)
-
-  // Commit message
   const commitMessage = getCommitMessage(commitSha, repositoryPath)
-
-  // Repository info
   const [owner, repo] = (env.GITHUB_REPOSITORY || '').split('/')
-
-  // Pull request info
   const prNumber = env.GITHUB_EVENT_NAME === 'pull_request' ? env.GITHUB_REF?.match(/refs\/pull\/(\d+)/)?.[1] : null
-
-  // CI info
-  const ciProvider = 'github-actions'
-  const buildId = env.GITHUB_RUN_ID
-  const buildNumber = env.GITHUB_RUN_NUMBER
-  const buildUrl = `${env.GITHUB_SERVER_URL || 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}`
-
-  // Actor info
-  const triggeredBy = env.GITHUB_ACTOR
-
-  // Workflow info
-  const workflow = env.GITHUB_WORKFLOW
-  const job = env.GITHUB_JOB
 
   return {
     commit: commitSha,
@@ -114,19 +140,39 @@ function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
     owner,
     repo,
     prNumber,
-    ciProvider,
-    buildId,
-    buildNumber,
-    buildUrl,
-    triggeredBy,
-    workflow,
-    job,
+    ciProvider: 'github-actions',
+    buildId: env.GITHUB_RUN_ID,
+    buildNumber: env.GITHUB_RUN_NUMBER,
+    buildUrl: `${env.GITHUB_SERVER_URL || 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}`,
+    triggeredBy: env.GITHUB_ACTOR,
+    workflow: env.GITHUB_WORKFLOW,
+    job: env.GITHUB_JOB,
     timestamp: new Date().toISOString()
   }
 }
 
+/**
+ * Collect git metadata from environment and git commands
+ * Supports GitHub Actions and Bitbucket Pipelines
+ * @param {Object} options - Options
+ * @param {string} options.repositoryPath - Path to git repository
+ * @param {string} [options.commitSha] - Override commit SHA
+ * @returns {Object} Git metadata
+ */
+function collectMetadata({ repositoryPath, commitSha: overrideCommitSha }) {
+  const env = process.env
+  const ciProvider = detectCIProvider()
+
+  if (ciProvider === 'bitbucket-pipelines') {
+    return collectBitbucketMetadata(env, repositoryPath)
+  }
+
+  return collectGitHubMetadata(env, repositoryPath, overrideCommitSha)
+}
+
 module.exports = {
   collectMetadata,
+  detectCIProvider,
   getTreeSha,
   getBranchFromGit,
   getCommitMessage
