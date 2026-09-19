@@ -1,25 +1,10 @@
 # BuildPulse GitHub Action
 
-GitHub Action that uploads test results from customer CI pipelines to BuildPulse for flaky test detection.
+Upload test results from your CI pipeline to [BuildPulse](https://buildpulse.io) for flaky test detection.
 
-## Role in the System
-
-This action runs in **customer CI pipelines**. It:
-1. Optionally runs the test command and collects CPU/memory metrics during execution (wrap mode)
-2. Collects JUnit XML test result files and runner hardware specs
-3. Packages them into an archive with metadata (commit SHA, branch, timestamps, resource metrics)
-4. Uploads the archive to BuildPulse's S3 bucket via a signed URL from the web-client API
-5. The `process-test-results` Lambda then picks up the archive from S3
-
-**Upload flow:** `buildpulse-action → POST /api/test-results/upload-url (web-client) → S3 → process-test-results Lambda`
-
-## Related Repositories
-
-| Repo | Role |
-|------|------|
-| `web-client` | Provides signed S3 upload URLs (`POST /api/test-results/upload-url`), manages API tokens |
-| `test-reporter-lambdas` | `process-test-results` Lambda processes uploads from S3 |
-| `environment` | S3 bucket infrastructure for test result archives |
+> **Setting up BuildPulse for the first time?** Use [`BuildPulseLLC/test-reporter-action@v3`](https://github.com/BuildPulseLLC/test-reporter-action), the current test reporter. This action keeps working for existing workflows.
+>
+> **Want faster CI too?** [BuildPulse runners](https://buildpulse.io/products/runners?utm_source=github&utm_medium=action&utm_content=buildpulse-action) run your GitHub Actions jobs 2x faster at half the cost of GitHub-hosted runners, with a one-line `runs-on` change.
 
 ## Usage
 
@@ -72,7 +57,7 @@ command: bundle exec rspec --format RspecJunitFormatter --out reports/junit.xml
 ```
 
 When using wrap mode:
-- Test output (stdout/stderr) streams through normally — you see it in your CI logs
+- Test output (stdout/stderr) streams through normally, so you still see it in your CI logs
 - Runner hardware specs (CPUs, memory, OS) are always captured
 - CPU load and memory usage are sampled every second during the test command
 - The action step fails if the test command exits non-zero
@@ -98,7 +83,7 @@ steps:
 | Input | Required | Description |
 |-------|----------|-------------|
 | `api-token` | Recommended | BuildPulse API token from organization settings |
-| `path` | Yes | Path to JUnit XML file(s) — file, directory, or glob |
+| `path` | Yes | Path to JUnit XML file(s): a file, directory, or glob |
 | `account` | Legacy only | BuildPulse account ID |
 | `repository` | Legacy only | BuildPulse repository ID |
 | `key` | Legacy only | `BUILDPULSE_ACCESS_KEY_ID` |
@@ -118,27 +103,3 @@ steps:
 | `account-id` | BuildPulse account ID |
 | `repository-id` | BuildPulse repository ID |
 | `command-exit-code` | Exit code of the test command (only set when using `command` input) |
-
-## Development
-
-```bash
-npm install
-npm test
-```
-
-### Source Files
-
-| File | Purpose |
-|------|---------|
-| `src/index.js` | Entry point — orchestrates the upload flow |
-| `src/archive.js` | Packages test result files into a tar archive |
-| `src/upload.js` | Handles S3 upload via signed URL |
-| `src/auth.js` | Authentication (API token and legacy key/secret) |
-| `src/metadata.js` | Collects Git metadata (commit, branch, timestamps) |
-| `src/sampler.js` | CPU/memory resource sampler for wrap mode metrics |
-| `action.yml` | GitHub Action definition (inputs, outputs, runs) |
-
-## Branch Status
-
-- `main`: Stable v2 with API token auth
-- `v2-modernization`: GitHub App authentication migration (**pending merge** — do not merge until coordinated with web-client and environment changes)
