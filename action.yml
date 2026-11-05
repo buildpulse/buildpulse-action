@@ -127,5 +127,5 @@ outputs:
   command-exit-code:
     description: "Exit code of the test command (only set when using command input)"
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
